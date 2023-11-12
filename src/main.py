@@ -1,6 +1,7 @@
 import argparse
-import os
-from file_service import FileService
+from parser.dependency_parser import DependencyParser
+from parser.ast_parser import AstParser
+from generater.script_generater import ScriptGenerater
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -14,18 +15,14 @@ if __name__ == '__main__':
     input_js = args.input_js
     output_js = args.output_js
 
-    fileService = FileService(input_js)
-    fileService.parse_file()
+    # 获取依赖关系
+    dependency_parser = DependencyParser(input_js)
+    dependency_parser.parse_file()
+    ast_functions = set()
+    for key, value in dependency_parser.maps.items():
+        parser = AstParser(key)
+        parser.get_used_functions(value, ast_functions)
 
-    # 提取目录路径
-    directory = os.path.dirname(output_js)
-
-    # 如果目录不存在，就创建它
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    with open(output_js, 'w') as file:
-        # 在文件中写入内容
-        file.write('Hello, World!')
-
-    pass
+    # 生成合并后脚本
+    script_generater = ScriptGenerater(output_js)
+    script_generater.generater(list(ast_functions))
