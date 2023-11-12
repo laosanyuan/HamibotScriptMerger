@@ -1,5 +1,4 @@
 import esprima
-import escodegen
 
 
 class AstParser(object):
@@ -11,11 +10,6 @@ class AstParser(object):
         self._script = script
         self._ast = esprima.parseScript(script)
 
-    def parser(self):
-        ast = esprima.parseScript(self._script)
-        generated_code = escodegen.generate(ast)
-        return generated_code
-
     def get_funtions(self) -> list:
         """获取函数列表
 
@@ -26,4 +20,37 @@ class AstParser(object):
         for item in self._ast.body:
             if item.type == 'FunctionDeclaration':
                 results.append(item)
+        return results
+
+    def get_requires(self) -> list:
+        """获取引用语句
+
+        Returns:
+            list: 引用语句
+        """
+        results = []
+        for item in self._ast.body:
+            if item.type == 'VariableDeclaration' and item.kind == 'const':
+                if len(item.declarations) == 1:
+                    declaration = item.declarations[0]
+                    if declaration.type == 'VariableDeclarator' and declaration.init.callee.name == 'require':
+                        results.append(item)
+
+        return results
+
+    def except_requires(self) -> list:
+        """获取不包含require语句的其他内容
+
+        Returns:
+            list: 
+        """
+        results = []
+        for item in self._ast.body:
+            if item.type == 'VariableDeclaration' and item.kind == 'const':
+                if len(item.declarations) == 1:
+                    declaration = item.declarations[0]
+                    if declaration.type == 'VariableDeclarator' and declaration.init.callee.name == 'require':
+                        continue
+            results.append(item)
+
         return results
