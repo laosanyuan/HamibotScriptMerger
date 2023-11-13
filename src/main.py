@@ -3,6 +3,33 @@ from parser.dependency_parser import DependencyParser
 from parser.ast_parser import AstParser
 from generater.script_generater import ScriptGenerater
 
+
+def merge(input: str, output: str) -> None:
+    """合并代码
+
+    Args:
+        input (str): 入口文件路径
+        output (str): 生成文件路径
+    """
+    main_parser = AstParser(input)
+    ast = main_parser.except_requires()
+
+    # 获取依赖关系
+    dependency_parser = DependencyParser(input)
+    dependency_parser.parse_file()
+    functions = set()
+    for key, value in dependency_parser.maps.items():
+        parser = AstParser(key)
+        parser.get_used_functions(value, functions)
+
+    for func in functions:
+        ast.append(func)
+
+    # 生成合并后脚本
+    script_generater = ScriptGenerater(output)
+    script_generater.generater(ast)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -12,17 +39,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    input_js = args.input_js
-    output_js = args.output_js
-
-    # 获取依赖关系
-    dependency_parser = DependencyParser(input_js)
-    dependency_parser.parse_file()
-    ast_functions = set()
-    for key, value in dependency_parser.maps.items():
-        parser = AstParser(key)
-        parser.get_used_functions(value, ast_functions)
-
-    # 生成合并后脚本
-    script_generater = ScriptGenerater(output_js)
-    script_generater.generater(list(ast_functions))
+    merge(args.input_js, args.output_js)

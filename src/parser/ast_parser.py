@@ -25,17 +25,16 @@ class AstParser(object):
                 results.append(item)
         return results
 
-    # def get_funtions(self, functions: list) -> list:
-    #     results = []
-    #     for item in self._ast.body:
-    #         if item.type == 'FunctionDeclaration' and item.id.name in functions:
-    #             function_calls = set()
-    #             self.find_called_functions(item, function_calls)
-    #             results.append(item)
-
-    #     return results
-
     def get_used_functions(self, function_names: set, function_ast: set) -> set:
+        """获取被引用到的函数
+
+        Args:
+            function_names (set): 入口函数名
+            function_ast (set): 函数ast
+
+        Returns:
+            set: 依赖函数ast集合
+        """
         all_functions = self.get_funtions()
 
         for item in all_functions:

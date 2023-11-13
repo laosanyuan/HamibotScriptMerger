@@ -13,7 +13,12 @@ class ScriptGenerater(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def generater(self, functions: list):
+    def generate_code(self, functions: list):
+        """根据ast生成代码
+
+        Args:
+            functions (list): 脚本ast
+        """
         ast = nodes.Script(functions)
         generated_code = escodegen.generate(ast)
         # 在文件中写入内容
