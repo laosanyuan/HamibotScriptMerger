@@ -3,40 +3,79 @@ from src.parser.ast_parser import AstParser
 from src.generater.script_generater import ScriptGenerater
 
 
-def test_get_functions():
-    js_code = """
-function add(x, y) {
-return x + y;
-}
+def test_get_used_functions_assign_state():
+    parser = AstParser('./tests/source/test_case/assign.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
 
-var result = add(3, 5);
-console.log(result);
-"""
-    parser = AstParser(js_code)
-    ast = parser.get_funtions()
-
-    generater = ScriptGenerater()
-    js = generater.generater(ast)
-
-    assert ast[0].type == 'FunctionDeclaration'
-    assert ast[0].id.name == 'add'
+    assert len(results) == 4
 
 
-def test_get_requires():
-    js_code = """
-const { greet, farewell } = require('./my-functions1');
-const { greet, farewell } = require('./my-functions2');
-const { greet, farewell } = require('./my-functions3');
+def test_get_used_functions_do_while_state():
+    parser = AstParser('./tests/source/test_case/do_while.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
 
-function add(x, y) {
-return x + y;
-}
+    assert len(results) == 4
 
-var result = add(3, 5);
-console.log(result);
-"""
-    parser = AstParser(js_code)
-    ast = parser.get_requires()
 
-    assert len(ast) == 3
+def test_get_used_functions_for_in_state():
+    parser = AstParser('./tests/source/test_case/for_in.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
 
+    assert len(results) == 5
+
+
+def test_get_used_functions_for_of_state():
+    parser = AstParser('./tests/source/test_case/for_of.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 4
+
+
+def test_get_used_functions_for_state():
+    parser = AstParser('./tests/source/test_case/for.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 5
+
+
+def test_get_used_functions_if_state():
+    parser = AstParser('./tests/source/test_case/if.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 7
+
+
+def test_get_used_functions_operation_state():
+    parser = AstParser('./tests/source/test_case/operation.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 9
+
+
+def test_get_used_functions_return_state():
+    parser = AstParser('./tests/source/test_case/return.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 2
+
+def test_get_used_functions_try_catch_state():
+    parser = AstParser('./tests/source/test_case/try_catch.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 4
+
+def test_get_used_functions_while_state():
+    parser = AstParser('./tests/source/test_case/while.js')
+    results = set()
+    parser.get_used_functions('testFunction1', results)
+
+    assert len(results) == 4

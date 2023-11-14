@@ -43,7 +43,7 @@ class AstParser(object):
                     continue
                 function_ast.add(item)
                 function_calls = set()
-                self.find_called_functions(item, function_calls)
+                self._find_called_functions(item, function_calls)
                 self.get_used_functions(function_calls, function_ast)
 
     def get_requires(self) -> list:
@@ -79,22 +79,65 @@ class AstParser(object):
 
         return results
 
-    def find_called_functions(self, ast, functions_call):
-        if isinstance(ast, Module) or isinstance(ast, Script) or isinstance(ast, BlockStatement):
-            self.find_called_functions(ast.body, functions_call)
-        elif isinstance(ast, ExpressionStatement):
-            self.find_called_functions(ast.expression, functions_call)
-        elif isinstance(ast, FunctionDeclaration):
-            functions_call.add(ast.id.name)
-            self.find_called_functions(ast.body, functions_call)
-            self.find_called_functions(ast.params, functions_call)
-        elif isinstance(ast, CallExpression):
-            self.find_called_functions(ast.arguments, functions_call)
-            functions_call.add(ast.callee.name)
-        elif isinstance(ast, list):
-            for item in ast:
-                self.find_called_functions(item, functions_call)
-        elif isinstance(ast, VariableDeclaration):
-            self.find_called_functions(ast.declarations, functions_call)
-        else:
-            pass
+    def _find_called_functions(self, ast: Node, functions_call: set):
+        """递归获取被调用到的函数名
+
+        Args:
+            ast (Node): 语句ast
+            functions_call (set): 函数名集合
+        """
+        try:
+            if isinstance(ast, Module) or isinstance(ast, Script) or isinstance(ast, BlockStatement):
+                self._find_called_functions(ast.body, functions_call)
+            elif isinstance(ast, ExpressionStatement):
+                self._find_called_functions(ast.expression, functions_call)
+            elif isinstance(ast, FunctionDeclaration):
+                functions_call.add(ast.id.name)
+                self._find_called_functions(ast.body, functions_call)
+                self._find_called_functions(ast.params, functions_call)
+            elif isinstance(ast, CallExpression):
+                self._find_called_functions(ast.arguments, functions_call)
+                if ast.callee.name == None:
+                    self._find_called_functions(ast.callee, functions_call)
+                else:
+                    functions_call.add(ast.callee.name)
+            elif isinstance(ast, list):
+                for item in ast:
+                    self._find_called_functions(item, functions_call)
+            elif isinstance(ast, VariableDeclaration):
+                self._find_called_functions(ast.declarations, functions_call)
+            elif isinstance(ast, IfStatement):
+                self._find_called_functions(ast.consequent, functions_call)
+                self._find_called_functions(ast.alternate, functions_call)
+                self._find_called_functions(ast.test, functions_call)
+            elif isinstance(ast, WhileStatement) or isinstance(ast, DoWhileStatement):
+                self._find_called_functions(ast.body, functions_call)
+                self._find_called_functions(ast.test, functions_call)
+            elif isinstance(ast, VariableDeclarator):
+                self._find_called_functions(ast.init, functions_call)
+            elif isinstance(ast, ForInStatement) or isinstance(ast, ForOfStatement):
+                self._find_called_functions(ast.body, functions_call)
+                self._find_called_functions(ast.left, functions_call)
+                self._find_called_functions(ast.right, functions_call)
+            elif isinstance(ast, ComputedMemberExpression) or isinstance(ast, StaticMemberExpression):
+                self._find_called_functions(ast.object, functions_call)
+            elif isinstance(ast, BinaryExpression) or isinstance(ast, AssignmentExpression):
+                self._find_called_functions(ast.left, functions_call)
+                self._find_called_functions(ast.right, functions_call)
+            elif isinstance(ast, ForStatement):
+                self._find_called_functions(ast.test, functions_call)
+                self._find_called_functions(ast.init, functions_call)
+                self._find_called_functions(ast.body, functions_call)
+            elif isinstance(ast, ReturnStatement):
+                self._find_called_functions(ast.argument, functions_call)
+            elif isinstance(ast, TryStatement):
+                self._find_called_functions(ast.handler, functions_call)
+                self._find_called_functions(ast.block, functions_call)
+                self._find_called_functions(ast.finalizer, functions_call)
+            elif isinstance(ast, CatchClause):
+                self._find_called_functions(ast.body, functions_call)
+                self._find_called_functions(ast.param, functions_call)
+            else:
+                pass
+        except Exception as e:
+            print(e)
