@@ -25,7 +25,7 @@ class AstParser(object):
                 results.append(item)
         return results
 
-    def get_used_functions(self, function_names: set, function_asts: set) -> None:
+    def get_called_functions(self, function_names: set, function_asts: set) -> None:
         """获取被引用到的函数
 
         Args:
@@ -44,9 +44,17 @@ class AstParser(object):
                 function_asts.add(item)
                 function_calls = set()
                 self._find_called_functions(item, function_calls)
-                self.get_used_functions(function_calls, function_asts)
+                self.get_called_functions(function_calls, function_asts)
 
-    def get_used_functions_with_name(self, function_name: str):
+    def get_called_functions_with_function(self, function_name: str) -> set:
+        """获取函数调用到的其他函数列表
+
+        Args:
+            function_name (str): 函数名
+
+        Returns:
+            set: 被调用函数集合
+        """
         function_asts = set()
         all_functions = self.get_funtions()
         for item in all_functions:
@@ -55,6 +63,18 @@ class AstParser(object):
 
         if function_name in function_asts:
             function_asts.remove(function_name)
+
+        return function_asts
+
+    def get_called_functions_with_script(self) -> set:
+        """获取被脚本调用的函数列表
+
+        Returns:
+            list: 脚本ast
+        """
+        function_asts = set()
+        for item in self.get_script():
+            self._find_called_functions(item, function_asts)
 
         return function_asts
 
@@ -74,11 +94,11 @@ class AstParser(object):
 
         return results
 
-    def except_requires(self) -> list:
-        """获取不包含require语句的其他内容
+    def get_script(self) -> list:
+        """获取不包含require语句和函数体的纯脚本部分
 
         Returns:
-            list: 
+            list: 脚本ast
         """
         results = []
         for item in self._ast.body:
@@ -87,6 +107,8 @@ class AstParser(object):
                     declaration = item.declarations[0]
                     if declaration.type == 'VariableDeclarator' and declaration.init.callee.name == 'require':
                         continue
+            if item.type == 'FunctionDeclaration':
+                continue
             results.append(item)
 
         return results

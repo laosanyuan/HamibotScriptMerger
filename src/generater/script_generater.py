@@ -21,6 +21,12 @@ class ScriptGenerater(object):
         """
         ast = nodes.Script(functions)
         generated_code = escodegen.generate(ast)
+
+        title = """// 以下脚本由“HamibotScriptMerger”打包合成。
+// 项目地址：https://github.com/laosanyuan/HamibotScriptMerger
+// 如在使用中发现任何问题，欢迎提issue。
+
+"""
         # 在文件中写入内容
-        with open(self.file_name, 'w') as file:
-            file.write(generated_code)
+        with open(self.file_name, 'w', encoding='utf-8') as file:
+            file.write(title + generated_code,)

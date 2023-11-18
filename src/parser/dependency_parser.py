@@ -4,42 +4,29 @@ import os
 
 class DependencyParser(object):
     def __init__(self, file: str, parsed_dict: dict = None) -> None:
+        """
+        Args:
+            file (str): 文件路径
+            parsed_dict (dict, optional): 逐层传递下来的解析标记字典. Defaults to None.
+        """
         self.entry_file = file
         self.maps = {}
+        self.ast_parser = AstParser(self.entry_file)
         if parsed_dict == None:
             self.parsed_dict = {}
         else:
             self.parsed_dict = parsed_dict
 
-    def parse_file(self):
-        return self.parse_dependencies(self.entry_file)
+    def parse_file(self) -> dict:
+        """从入口脚本解析文件
 
-    # def parse_dependencies(self, file_name: str):
-    #     parser = AstParser(file_name)
-    #     requires = parser.get_requires()
-    #     internal_functions = parser.get_funtions()
-    #     if len(requires) > 0:
-    #         for require in requires:
-    #             tmp_file_name = require.declarations[0].init.arguments[0].value
-    #             tmp_file_name = os.path.normpath(os.path.join(
-    #                 os.path.dirname(file_name), tmp_file_name)) + '.js'
-    #             tmp_functions = []
-    #             for function in require.declarations[0].id.properties:
-    #                 tmp_functions.append(function.key.name)
-
-    #             need_parse = False
-    #             # 保存
-    #             if tmp_file_name in self.maps:
-    #                 for function in tmp_functions:
-    #                     if function not in self.maps[tmp_file_name]:
-    #                         self.maps[tmp_file_name].append(function)
-    #                         need_parse = True
-    #             else:
-    #                 self.maps[tmp_file_name] = tmp_functions
-    #                 need_parse = True
-
-    #             if need_parse:
-    #                 self.parse_dependencies(tmp_file_name)
+        Returns:
+            dict: 文件-函数 映射关系
+        """
+        functions = self.ast_parser.get_called_functions_with_script()
+        simplest_maps = {}
+        self._parse_dependencies_with_name(simplest_maps, functions, None)
+        return simplest_maps
 
     def parse_simplest_dependencies(self, function_name: str) -> dict:
         """获取函数的最简依赖
@@ -58,22 +45,33 @@ class DependencyParser(object):
         else:
             self._record_parsed_func(function_name)
 
-        parser = AstParser(self.entry_file)
         # 当前函数所有调用到的函数名
-        called_functions = parser.get_used_functions_with_name(function_name)
+        called_functions = self.ast_parser.get_called_functions_with_function(
+            function_name)
 
         simplest_maps[self.entry_file] = set()
         simplest_maps[self.entry_file].add(function_name)
+        self._parse_dependencies_with_name(
+            simplest_maps, called_functions, function_name)
+        return simplest_maps
 
+    def _parse_dependencies_with_name(self, simplest_maps: dict, called_functions: list, function_name: str = None) -> None:
+        """根据函数名称解析依赖关系
+
+        Args:
+            simplest_maps (dict): 文件-函数映射字典
+            called_functions (list): 被调桉树列表
+            function_name (str, optional): 入口函数名. Defaults to None.
+        """
         # 检查自身引用
-        internal_functions = parser.get_funtions()
+        internal_functions = self.ast_parser.get_funtions()
         for function in internal_functions:
             tmp_function_name = function.id.name
             if tmp_function_name in called_functions and tmp_function_name != function_name:
                 simplest_maps[self.entry_file].add(tmp_function_name)
 
         # 检查依赖引用
-        requires = parser.get_requires()
+        requires = self.ast_parser.get_requires()
         if len(requires) > 0:
             for require in requires:
                 # 获取依赖文件名
@@ -92,6 +90,15 @@ class DependencyParser(object):
                             simplest_maps[tmp_file_name].add(tmp_function_name)
 
         # 递归获取数据
+        self._extend_dependencies(simplest_maps, function_name)
+
+    def _extend_dependencies(self, simplest_maps: dict, function_name: str = None) -> None:
+        """根据已有函数映射向外递归扩展获取
+
+        Args:
+            simplest_maps (dict): 已有函数映射字典
+            function_name (str, optional): 入口函数名称. Defaults to None.
+        """
         for file, function_list in list(simplest_maps.items()):
             dependency_parser = DependencyParser(file, self.parsed_dict)
             for func in list(function_list):
@@ -108,9 +115,12 @@ class DependencyParser(object):
                     else:
                         simplest_maps[tmp_map_name] = tmp_map_list
 
-        return simplest_maps
-
     def _record_parsed_func(self, func: str) -> None:
+        """记录链路上已完成解析函数
+
+        Args:
+            func (str): 函数名
+        """
         if self.entry_file in self.parsed_dict:
             if func not in self.parsed_dict[self.entry_file]:
                 self.parsed_dict[self.entry_file].append(func)

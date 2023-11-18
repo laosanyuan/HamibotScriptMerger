@@ -12,22 +12,22 @@ def merge(input: str, output: str) -> None:
         output (str): 生成文件路径
     """
     main_parser = AstParser(input)
-    ast = main_parser.except_requires()
+    ast = main_parser.get_script()
 
     # 获取依赖关系
     dependency_parser = DependencyParser(input)
-    dependency_parser.parse_file()
+    maps = dependency_parser.parse_file()
     functions = set()
-    for key, value in dependency_parser.maps.items():
+    for key, value in maps.items():
         parser = AstParser(key)
-        parser.get_used_functions(value, functions)
+        parser.get_called_functions(value, functions)
 
     for func in functions:
         ast.append(func)
 
     # 生成合并后脚本
     script_generater = ScriptGenerater(output)
-    script_generater.generater(ast)
+    script_generater.generate_code(ast)
 
 
 if __name__ == '__main__':

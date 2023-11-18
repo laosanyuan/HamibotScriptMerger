@@ -2,6 +2,8 @@ from src.parser.dependency_parser import DependencyParser
 
 
 def test_parse_simplest_dependencies_internal_reference_1():
+    """内部依赖
+    """
     js_path = 'tests/source/reference_case/internal_reference.js'
     parser = DependencyParser(js_path)
     result = parser.parse_simplest_dependencies('test_1')
@@ -26,7 +28,9 @@ def test_parse_simplest_dependencies_internal_reference_2():
     assert 'test_7' in result[js_path]
 
 
-def test_parse_simplest_dependencies_external_reference_1():
+def test_parse_simplest_dependencies_external_nested_dependency_success():
+    """外部嵌套依赖
+    """
     js_path = 'tests/source/reference_case/external_reference_1.js'
     parser = DependencyParser(js_path)
     result = parser.parse_simplest_dependencies('test_1')
@@ -40,7 +44,9 @@ def test_parse_simplest_dependencies_external_reference_1():
             functions.remove(name)
 
 
-def test_parse_simplest_dependencies_external_reference_2():
+def test_parse_simplest_dependencies_external_circular_dependency_success():
+    """外部环依赖
+    """
     js_path = 'tests\\source\\reference_case\\external_reference_1.js'
     parser = DependencyParser(js_path)
     result = parser.parse_simplest_dependencies('test_2')
