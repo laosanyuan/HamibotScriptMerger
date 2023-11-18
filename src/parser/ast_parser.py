@@ -14,7 +14,7 @@ class AstParser(object):
         self._ast = esprima.parseScript(script)
 
     def get_funtions(self) -> list:
-        """获取函数列表
+        """获取所有函数列表
 
         Returns:
             list: 函数ast
@@ -25,7 +25,7 @@ class AstParser(object):
                 results.append(item)
         return results
 
-    def get_used_functions(self, function_names: set, function_ast: set) -> set:
+    def get_used_functions(self, function_names: set, function_asts: set) -> None:
         """获取被引用到的函数
 
         Args:
@@ -39,12 +39,24 @@ class AstParser(object):
 
         for item in all_functions:
             if item.id.name in function_names:
-                if item in function_ast:
+                if item in function_asts:
                     continue
-                function_ast.add(item)
+                function_asts.add(item)
                 function_calls = set()
                 self._find_called_functions(item, function_calls)
-                self.get_used_functions(function_calls, function_ast)
+                self.get_used_functions(function_calls, function_asts)
+
+    def get_used_functions_with_name(self, function_name: str):
+        function_asts = set()
+        all_functions = self.get_funtions()
+        for item in all_functions:
+            if item.id.name == function_name:
+                self._find_called_functions(item, function_asts)
+
+        if function_name in function_asts:
+            function_asts.remove(function_name)
+
+        return function_asts
 
     def get_requires(self) -> list:
         """获取引用语句
