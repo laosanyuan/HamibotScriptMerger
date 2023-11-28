@@ -31,12 +31,12 @@ def merge(input: str, output: str) -> None:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parameters = argparse.ArgumentParser()
 
     # 添加位置参数
-    parser.add_argument('input_js', type=str, help='入口函数文件')
-    parser.add_argument('output_js', type=str, help='生成文件路径')
+    parameters.add_argument('input', type=str, help='入口函数文件')
+    parameters.add_argument('output', type=str, help='生成文件路径')
 
-    args = parser.parse_args()
+    args = parameters.parse_args()
 
     merge(args.input_js, args.output_js)
