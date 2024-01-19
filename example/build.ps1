@@ -1,0 +1,1 @@
+./hamibot_merger.exe "./main.js" "./out.js"
